@@ -1,0 +1,6 @@
+node_modules/
+dist/
+packaged.yaml
+frontend/.env
+.tmp-*
+*.zip

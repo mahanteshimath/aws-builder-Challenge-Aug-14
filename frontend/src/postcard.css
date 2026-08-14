@@ -1,0 +1,185 @@
+:root {
+  --ink: #2b2118;
+  --paper: #f4ead6;
+  --edge: #d8c7a5;
+  --stamp: #b5443a;
+  --card-w: min(92vw, 620px);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #1d2b2a radial-gradient(ellipse at 50% -10%, #2f4746, #16211f 70%);
+  color: var(--ink);
+  font-family: "Courier Prime", ui-monospace, monospace;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 5rem;
+}
+
+header { text-align: center; color: var(--paper); margin-bottom: 2rem; }
+
+h1 {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: clamp(2.75rem, 9vw, 4.5rem);
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+
+header p { opacity: 0.7; margin: 0.25rem 0 0; }
+
+form {
+  background: var(--paper);
+  border-radius: 4px;
+  padding: 1rem;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.35);
+}
+
+textarea {
+  width: 100%;
+  border: 1px dashed var(--edge);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem;
+  resize: vertical;
+}
+
+.row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; }
+.count { font-size: 0.8rem; opacity: 0.55; }
+
+button[type="submit"] {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  letter-spacing: 0.08em;
+  font-size: 1.15rem;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 3px;
+  background: var(--stamp);
+  color: var(--paper);
+  cursor: pointer;
+}
+
+button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.error {
+  margin-top: 1rem;
+  color: #ffd9d4;
+  background: rgb(181 68 58 / 0.35);
+  padding: 0.75rem 1rem;
+  border-radius: 3px;
+}
+
+/* --- the postcard --- */
+
+.stage { margin-top: 2.5rem; perspective: 1600px; text-align: center; }
+
+.card {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  position: relative;
+  width: var(--card-w);
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  transition: transform 0.75s cubic-bezier(0.4, 0.15, 0.2, 1);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 18px 28px rgb(0 0 0 / 0.45));
+}
+
+.card.flipped { transform: rotateY(180deg); }
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: var(--paper);
+  border: 10px solid var(--paper);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.front .art { position: absolute; inset: 0; line-height: 0; }
+.front .art svg { width: 100%; height: 100%; display: block; }
+
+.banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.5rem;
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: clamp(1.1rem, 4vw, 2rem);
+  letter-spacing: 0.05em;
+  color: var(--paper);
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+  text-shadow: 0 2px 6px rgb(0 0 0 / 0.6);
+}
+
+.back {
+  transform: rotateY(180deg);
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-image: linear-gradient(var(--paper), var(--paper)),
+    repeating-linear-gradient(45deg, #e9dcc2 0 6px, transparent 6px 12px);
+}
+
+.back .left { border-right: 1px solid var(--edge); padding-right: 0.75rem; }
+
+.note {
+  font-family: "Caveat", cursive;
+  font-size: clamp(1.05rem, 3.4vw, 1.5rem);
+  line-height: 1.35;
+  margin: 0;
+  text-align: left;
+}
+
+.back .right { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
+
+.stamp {
+  width: 5.5rem;
+  height: 6.5rem;
+  border: 3px dotted var(--edge);
+  background: var(--stamp);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+  padding: 0.35rem;
+  font-size: 0.6rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.postmark {
+  margin-top: 0.6rem;
+  font-size: 0.72rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  opacity: 0.65;
+  transform: rotate(-7deg);
+}
+
+.cancellation {
+  margin-top: 0.35rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.lines { margin-top: auto; width: 100%; display: grid; gap: 0.55rem; }
+.lines span { height: 1px; background: var(--edge); }
+
+.hint { color: var(--paper); opacity: 0.5; font-size: 0.8rem; margin-top: 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
