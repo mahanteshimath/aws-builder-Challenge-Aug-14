@@ -4,6 +4,14 @@ import Postcard from "./Postcard.jsx";
 const API = import.meta.env.VITE_FUNCTION_URL ?? "";
 const idFromHash = () => (location.hash.match(/^#\/p\/([\w-]+)$/) ?? [])[1];
 
+const EXAMPLES = [
+  "I was late for a train made of paper, and the conductor kept apologising for the rain",
+  "I kept trying to post a letter into a lighthouse, but the slot was full of moths",
+  "I was alone in a drowned city at night, walking on rooftops, every window still lit",
+  "I flew a kite over my old school at dawn and the whole sky turned saffron, white and green",
+  "My grandmother's kitchen had a door I had never noticed, and behind it was the sea",
+];
+
 export default function App() {
   const [dreamText, setDreamText] = useState("");
   const [card, setCard] = useState(null);
@@ -61,7 +69,11 @@ export default function App() {
       </header>
 
       <form onSubmit={mail}>
+        <label htmlFor="dream">
+          Describe a dream in a sentence or two — the stranger the better.
+        </label>
         <textarea
+          id="dream"
           value={dreamText}
           onChange={(e) => setDreamText(e.target.value)}
           maxLength={500}
@@ -74,6 +86,20 @@ export default function App() {
           <button type="submit" disabled={busy || !dreamText.trim()}>
             {busy ? "At the post office..." : "Mail it home"}
           </button>
+        </div>
+
+        <p className="try">No dream handy? Borrow one:</p>
+        <div className="examples">
+          {EXAMPLES.map((example) => (
+            <button
+              key={example}
+              type="button"
+              className="chip"
+              onClick={() => setDreamText(example)}
+            >
+              {example.length > 46 ? `${example.slice(0, 46)}\u2026` : example}
+            </button>
+          ))}
         </div>
       </form>
 

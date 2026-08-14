@@ -17,6 +17,7 @@ export const PALETTES = {
   noon: { sky: ["#bfe6f0", "#7fc6d9"], sun: "#fffbe8", layers: ["#8fbf9f", "#6aa287", "#4a806e", "#2f5c55", "#1b3a39"] },
   storm: { sky: ["#9aa7ad", "#5c6b73"], sun: "#e8eef0", layers: ["#6b7a80", "#53636b", "#3d4b53", "#2a353c", "#1a2126"] },
   night: { sky: ["#2b3a63", "#141a30"], sun: "#f2f0d8", layers: ["#3a4a72", "#2e3a5c", "#232c47", "#181f33", "#0e1220"] },
+  tricolour: { sky: ["#ff9933", "#fdfaf4"], sun: "#fff7e6", layers: ["#4aa85c", "#31923f", "#1f7a2e", "#136b22", "#0a4715"] },
 };
 
 /** Seeded RNG so a postcard id always redraws to the same poster. */

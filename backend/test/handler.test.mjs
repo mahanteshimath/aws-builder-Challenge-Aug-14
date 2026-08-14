@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { HttpError, claimBudget, parseRequest } from "../index.mjs";
 import { ARCHETYPES, PALETTES, normalizeScene, renderPoster } from "../poster.mjs";
-import { parseJsonObject, toPostcard } from "../postcard.mjs";
+import { parseJsonObject, toPostcard, SYSTEM } from "../postcard.mjs";
 
 const post = (body) => ({
   requestContext: { http: { method: "POST" } },
@@ -66,10 +66,23 @@ test("model prose around the JSON is stripped before parsing", () => {
   assert.throws(() => parseJsonObject("no object here"));
 });
 
+test("a raw newline inside a string value does not crash the parse", () => {
+  assert.deepEqual(parseJsonObject('{"note":"line one\nline two"}'), { note: "line one line two" });
+  assert.deepEqual(parseJsonObject('{"note":"tab\there"}'), { note: "tab here" });
+});
+
 test("a postcard missing required prose is rejected", () => {
   const ok = { destination: "THE PAPER COAST", note: "n", postmark: "p", stamp: "s" };
   assert.equal(toPostcard(ok).destination, "THE PAPER COAST");
   assert.throws(() => toPostcard({ ...ok, note: "   " }), /note/);
+});
+
+test("an explicit celebration pins the tricolour palette, whatever the model picked", () => {
+  const ok = { destination: "D", note: "n", postmark: "p", stamp: "s", palette: "dusk" };
+  for (const dream of ["happy independence day india", "a parade with flags", "Diwali on the roof"]) {
+    assert.equal(toPostcard(ok, dream).scene.palette, "tricolour", dream);
+  }
+  assert.equal(toPostcard(ok, "a quiet grey beach").scene.palette, "dusk");
 });
 
 test("hostile or nonsense art direction is clamped, never trusted", () => {
@@ -97,4 +110,16 @@ test("the same id always redraws the same poster", () => {
   const scene = { archetype: "mountains", palette: "night", sunY: 0.2, birds: 5 };
   assert.equal(renderPoster(scene, "same-id"), renderPoster(scene, "same-id"));
   assert.notEqual(renderPoster(scene, "same-id"), renderPoster(scene, "other-id"));
+});
+
+test("every archetype and palette the renderer supports is offered to the model", () => {
+  for (const name of [...ARCHETYPES, ...Object.keys(PALETTES)]) {
+    assert.ok(SYSTEM.includes(name), `"${name}" is missing from the system prompt`);
+  }
+});
+
+test("every palette renders", () => {
+  for (const palette of Object.keys(PALETTES)) {
+    assert.match(renderPoster({ archetype: "city", palette }, palette), /^<svg[\s\S]*<\/svg>$/);
+  }
 });
