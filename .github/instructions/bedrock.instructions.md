@@ -1,17 +1,31 @@
 ---
 applyTo: "backend/**/*.{mjs,js,ts}"
-description: "Bedrock request and response shapes for Dream Postcards: Nova Lite via Converse, Stable Image Core via InvokeModel, plus region pinning and cost guards."
+description: "Bedrock usage for Dream Postcards: Nova Lite via Converse for words and art direction, why there is no image model on this account, and the cost and safety guards."
 ---
 
 # Bedrock in this project
 
-Region is **`us-west-2`**, pinned in code. `amazon.nova-canvas-v1:0` is LEGACY on this account and
-returns `ResourceNotFoundException` — do not reintroduce it.
+Region is **`us-west-2`**, pinned in code.
 
 ```js
 import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 const bedrock = new BedrockRuntimeClient({ region: "us-west-2" });
 ```
+
+## There is no image model here
+
+Both options were tried on this account and both fail. Do not reintroduce either.
+
+| Model | Failure |
+|---|---|
+| `amazon.nova-canvas-v1:0` | `ResourceNotFoundException` — provider marked it LEGACY |
+| `stability.stable-image-core-v1:1` | `AccessDeniedException: INVALID_PAYMENT_INSTRUMENT` — third-party Marketplace model, and the IAM user lacks `aws-marketplace:Subscribe` |
+
+The postcard front is drawn by `backend/poster.mjs`. Nova Lite supplies art direction
+(`archetype`, `palette`, `sunY`, `birds`) and the renderer draws the SVG.
+
+If image generation is ever unblocked, add it *behind* the existing renderer as a fallback rather
+than replacing it — the renderer is free, instant, and deterministic.
 
 ## Text — `amazon.nova-lite-v1:0` via `ConverseCommand`
 
@@ -20,55 +34,35 @@ const res = await bedrock.send(new ConverseCommand({
   modelId: "amazon.nova-lite-v1:0",
   system: [{ text: "Respond with a single JSON object and nothing else." }],
   messages: [{ role: "user", content: [{ text: prompt }] }],
-  inferenceConfig: { maxTokens: 600, temperature: 0.9 },
+  inferenceConfig: { maxTokens: 700, temperature: 0.9 },
 }));
 const text = res.output.message.content[0].text;
 ```
 
-Nova Lite prepends chatter ("Understood, here is your reply:") even when told not to. Slice to the
-outermost braces before parsing, and validate every field you rely on:
+Nova Lite prepends chatter ("Understood, here is your reply:") and wraps output in code fences even
+when told not to. Slice to the outermost braces before parsing — `parseJsonObject` does this.
 
-```js
-const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-```
+Nova **Pro** and Premier are not available on-demand here: they need an inference profile ID such as
+`us.amazon.nova-pro-v1:0`, not the bare model ID.
 
-## Image — `stability.stable-image-core-v1:1` via `InvokeModelCommand`
+## Treat model output as untrusted
 
-Note this is Stability's own schema, **not** the older `text_prompts` SDXL schema.
-
-```js
-const res = await bedrock.send(new InvokeModelCommand({
-  modelId: "stability.stable-image-core-v1:1",
-  body: JSON.stringify({
-    prompt,                      // <= 10000 chars
-    mode: "text-to-image",
-    aspect_ratio: "3:2",         // postcard shape
-    output_format: "png",
-  }),
-}));
-const { images, finish_reasons } = JSON.parse(new TextDecoder().decode(res.body));
-```
-
-`images[0]` is a base64 PNG, roughly 3-5 MB. Decode with `Buffer.from(images[0], "base64")` and put
-it straight to S3 — never return it in the HTTP response body.
-
-A non-null entry in `finish_reasons` means the content filter rejected the prompt. That is a normal
-user outcome, not a server error: return a friendly message, and do not retry.
+- Prose fields are rendered as **text**, never as markup.
+- Art-direction fields go through `normalizeScene`, which clamps them to a fixed vocabulary. A
+  hostile or nonsense value degrades into a still-good poster instead of reaching the DOM.
+- This is the only reason the frontend may use `dangerouslySetInnerHTML` on the poster.
 
 ## Errors
 
 | Error | Meaning | Response |
 |---|---|---|
-| `ValidationException` | prompt rejected or malformed request | 400, friendly message |
-| non-null `finish_reasons[0]` | image blocked by content filter | 400, friendly message |
+| `ValidationException` | malformed request, or a bare model ID needing an inference profile | 400, do not retry blindly |
 | `ThrottlingException` | rate limited | retry once with backoff, then 503 |
-| `ResourceNotFoundException` | model is LEGACY or wrong region | do not retry — it is a config bug |
+| `ResourceNotFoundException` | model is LEGACY or wrong region | config bug, do not retry |
+| `AccessDeniedException` | Marketplace subscription or payment problem | config bug, do not retry |
 
-## Cost guards
+## Guards
 
-Every image is a real charge. Non-negotiable:
-
-- One image per request. Never loop, never batch, never generate on retry.
-- Enforce the daily cap in the handler *before* calling the image model.
 - Reject `dreamText` over 500 chars at the boundary rather than truncating and calling anyway.
-- Mock Bedrock in tests. A test must never reach the real API.
+- Claim the daily cap (`claimBudget`) *before* the model call, so a spent budget costs nothing.
+- Tests never reach the real API — `npm test` makes no network calls.

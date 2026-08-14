@@ -25,13 +25,12 @@ routes, DynamoDB TTL instead of a cleanup job.]
 
 | Service | Role |
 |---|---|
-| Amazon Bedrock | Nova Lite writes the postcard text, Stable Image Core paints the front |
-| AWS Lambda | single Node 22 handler behind a Function URL |
-| Amazon S3 | stores generated PNGs, served via presigned GET |
-| Amazon DynamoDB | postcard index, 30-day TTL |
+| Amazon Bedrock | Nova Lite writes the postcard and art-directs the front |
+| AWS Lambda | single Node 22 arm64 handler behind a Function URL |
+| Amazon DynamoDB | postcard store and the atomic daily budget counter, 30-day TTL |
 | AWS Amplify Hosting | serves the Vite + React frontend |
-| AWS CloudFormation | provisions the stack via SAM |
-| AWS IAM | scopes the Lambda to exactly the two model ARNs |
+| AWS CloudFormation | provisions the stack via the SAM transform |
+| AWS IAM | scopes the Lambda to exactly one model ARN |
 
 ```mermaid
 [paste the diagram from article/architecture.md]
@@ -39,12 +38,13 @@ routes, DynamoDB TTL instead of a cleanup job.]
 
 ## What I learned
 
-[Be specific and useful to the next builder. Candidates: model lifecycle status is a real deployment
-constraint and `ListFoundationModels` availability does not imply access; Stability's Bedrock schema
-is not the old SDXL `text_prompts` shape; small models pad JSON responses with prose so you must
-slice to the braces; per-image cost makes a daily cap a design requirement, not a nice-to-have.]
+[Be specific and useful to the next builder. Candidates: a model appearing in
+`ListFoundationModels` does not mean you can call it — check `modelLifecycle.status`; third-party
+Marketplace models need a payment instrument even when you hold service credits; Nova Pro needs an
+inference profile id, not a bare model id; small models wrap JSON in prose and code fences; a CSS
+`filter` silently flattens a 3D transform context and breaks `backface-visibility`.]
 
 ## Link
 
-[Live URL, and the public repo. Add screenshots or a short walkthrough clip — the rubric rewards
-showing it working.]
+[Live: https://main.d5c14kpdhh5ai.amplifyapp.com plus the public repo. Add screenshots of the front
+and the flipped back — the rubric rewards showing it working.]

@@ -89,7 +89,6 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; }
   margin: 0 auto;
   transition: transform 0.75s cubic-bezier(0.4, 0.15, 0.2, 1);
   transform-style: preserve-3d;
-  filter: drop-shadow(0 18px 28px rgb(0 0 0 / 0.45));
 }
 
 .card.flipped { transform: rotateY(180deg); }
@@ -97,11 +96,15 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .face {
   position: absolute;
   inset: 0;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   background: var(--paper);
   border: 10px solid var(--paper);
   border-radius: 3px;
   overflow: hidden;
+  /* Shadow lives here, not on .card: a filter on the card would flatten the 3D context and
+     silently disable backface-visibility, showing a mirrored front instead of the back. */
+  box-shadow: 0 18px 28px rgb(0 0 0 / 0.45);
 }
 
 .front .art { position: absolute; inset: 0; line-height: 0; }
@@ -168,7 +171,7 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 
 .cancellation {
-  margin-top: 0.35rem;
+  margin-top: 0.9rem;
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
